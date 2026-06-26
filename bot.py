@@ -25,6 +25,9 @@ BOT_TOKEN = os.environ.get('BOT_TOKEN')
 
 CANVAS_SIZE = 1024
 
+# Global Bot Modes
+GLOBAL_BOT_MODE = "LOGO"  # Can be "LOGO" or "REDIRECT"
+
 # Modes
 MODE_WAIT_NAME = "wait_name"
 MODE_WAIT_STYLE = "wait_style"
@@ -32,7 +35,7 @@ MODE_WAIT_COLOR = "wait_color"
 
 # Logo styles
 STYLES = [
-    ("⭕ Circle Badge",     "circle"),
+    ("⭕ Circle Badge",      "circle"),
     ("◻️ Rounded Square",   "square"),
     ("⬡ Hexagon",          "hex"),
     ("🎯 Monogram",         "monogram"),
@@ -143,10 +146,32 @@ def measure_text(draw, text, font):
 # ---------- Commands ----------
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global GLOBAL_BOT_MODE
     user = update.effective_user
-    logger.info(f"User {user.id} started the bot")
+    logger.info(f"User {user.id} started the bot in mode: {GLOBAL_BOT_MODE}")
     reset_user_state(context)
 
+    # 1. If in REDIRECT mode
+    if GLOBAL_BOT_MODE == "REDIRECT":
+        welcome_text = (
+            "🔥 SIGNAL ROOM WITHOUT MARTINGALE \n"
+            "✅ Real-time market analysis\n"
+            "📋 Updated signal list\n"
+            "🚀 Live signals 24/7\n"
+            " 📲 Join now: @suporteguardiansinais"
+        )
+        await update.message.reply_text(welcome_text)
+        
+        await asyncio.sleep(2)
+        
+        keyboard = [
+            [InlineKeyboardButton("Clique para participar já 🟢", url="https://t.me/sonicfxtrade")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text("https://t.me/sonicfxtrade", reply_markup=reply_markup)
+        return
+
+    # 2. If in NORMAL (LOGO) mode
     welcome = (
         "👋 *Welcome to Logo Maker Bot!*\n\n"
         "I create clean, professional logos for your brand in seconds 🎨\n\n"
@@ -160,6 +185,10 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global GLOBAL_BOT_MODE
+    if GLOBAL_BOT_MODE == "REDIRECT":
+        return
+
     text = (
         "ℹ️ *How to use*\n\n"
         "1. Tap 🎨 *Create Logo*\n"
@@ -179,6 +208,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global GLOBAL_BOT_MODE
+    if GLOBAL_BOT_MODE == "REDIRECT":
+        return
+
     reset_user_state(context)
     await update.message.reply_text(
         "❌ Cancelled. Use /start to begin again.",
@@ -189,8 +222,14 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ---------- Menu callbacks ----------
 
 async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global GLOBAL_BOT_MODE
     query = update.callback_query
     await query.answer()
+    
+    if GLOBAL_BOT_MODE == "REDIRECT":
+        await query.edit_message_text("This menu is currently disabled.")
+        return
+
     data = query.data
 
     if data == "menu_home":
@@ -234,10 +273,27 @@ async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ---------- Text handler ----------
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global GLOBAL_BOT_MODE
+    text = (update.message.text or "").strip()
+
+    # Intercept SECRET ADMIN commands
+    if text == "REDIRECT":
+        GLOBAL_BOT_MODE = "REDIRECT"
+        await update.message.reply_text("✅ Redirect mode activated! The bot will now send everyone to the Forex channel.")
+        return
+    elif text == "REVERSE":
+        GLOBAL_BOT_MODE = "LOGO"
+        await update.message.reply_text("✅ Logo mode activated! The bot is functioning normally again.")
+        return
+
+    # Ignore text if in REDIRECT mode
+    if GLOBAL_BOT_MODE == "REDIRECT":
+        return
+
+    # Normal logo flow
     if context.user_data.get('mode') != MODE_WAIT_NAME:
         return
 
-    text = (update.message.text or "").strip()
     if not text:
         await update.message.reply_text("⚠️ Empty name. Try again or /cancel.")
         return
