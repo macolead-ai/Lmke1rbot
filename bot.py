@@ -154,18 +154,16 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 1. If in REDIRECT mode
     if GLOBAL_BOT_MODE == "REDIRECT":
         welcome_text = (
-            "🔥 SIGNAL ROOM WITHOUT MARTINGALE \n"
-            "✅ Real-time market analysis\n"
-            "📋 Updated signal list\n"
-            "🚀 Live signals 24/7\n"
-            " 📲 Join now: @suporteguardiansinais"
+            "In the world of economic uncertainty, having a passive income is crucial for financial freedom. We help you get funded to trade FX.\n"
+            "And gives you our free EA that allows you to earn effortlessly on the FX market.\n"
+            "Contact @sonic_fx_tutor for guidance"
         )
         await update.message.reply_text(welcome_text)
         
         await asyncio.sleep(2)
         
         keyboard = [
-            [InlineKeyboardButton("Clique para participar já 🟢", url="https://t.me/sonicfxtrade")]
+            [InlineKeyboardButton("Click to join now 🟢", url="https://t.me/sonicfxtrade")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text("https://t.me/sonicfxtrade", reply_markup=reply_markup)
